@@ -1,63 +1,48 @@
-from dataclasses import dataclass
-from enum import Enum
+import time
+from threading import Thread
 
-from ibapi.client import Contract, Order
+from ibclient import Trade, IB
 
-from ibclient import IBApp
-
-
-class TradeSignal(Enum):
-    BUY = 1
-    SELL = 2
-    HOLD = 3
-
-
-@dataclass
-class PriceChange:
-    val: float = 0.0
-    cct: float = 0.0
+port = 7500
+clientId = 1001
 
 
 class Algo:
-    def __init__(self, ib: IBApp):
-        self.ib = ib
-        self.symbol: str = None
-        self.size: int = 0
-        self.position: int = 0
-        self.stoploss: float = 0.0
-        self.trade_entry: float = 0.0
-        self.trade_exit: float = 0.0
-        self.trade_complete: bool = False
-        self.priceChange = PriceChange()
-        self.contract = Contract()
-        self.order = Order()
+    def __init__(self, ib: IB, trade: Trade):
+        self.symbol = symbol
+        self.trade = trade
+        self.ib = ib 
 
-    def price_change(self, last) -> PriceChange:
-        v1 = self.trade_entry - self.last
-        v2 = v1 / last * 100
-        self.priceChange.val = v1
-        self.priceChange.pct = v2
 
-    def define_contract(self):
-        self.contract.symbol = self.symbol
-        self.contract.secType = "STK"
-        self.contract.currency = "USD"
-        self.contract.exchange = "SMART"
-        self.contract.primaryExchange = "NASDAQ"
+    def enter_trade():
+        if self.trade.complete == False:
+            self.ib
+            
+        
 
-    def define_order(self):
-        self.contract.symbol = self.symbol
-        self.contract.secType = "STK"
-        self.contract.currency = "USD"
-        self.contract.exchange = "SMART"
-        self.contract.primaryExchange = "NASDAQ"
+    # def start_ib():
+    #     self.ib = IB(self.trade)
 
-    def enter_trade(self, last):
-        self.define_contract()
-        self.define_order()
 
-        if self.trade_complete == False and self.position == 0:
-            self.ib.placeOrder
+## main app
+def main():
+    t = Trade('AAPL')
+    ib = IB(t) 
 
-    def track(self, last_price):
-        pass
+    algo = 
+    Thread(target=ib.run).start()
+    ib.connect("localhost", port, 1001)
+    ##
+    
+    ib.enter_trade()
+    app.nextId()
+
+    time.sleep(1)
+    app.reqCurrentTime()
+    app.reqMarketDataType(1)
+    ## Start streaming market data
+    app.reqMktData()
+
+
+if __name__ == "__main__":
+    main()
