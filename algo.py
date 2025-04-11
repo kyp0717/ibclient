@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from ibapi.client import Contract
+from ibapi.client import Contract, Order
 
 from ibclient import IBApp
 
@@ -20,6 +20,7 @@ class PriceChange:
 
 class Algo:
     def __init__(self, ib: IBApp):
+        self.ib = ib
         self.symbol: str = None
         self.size: int = 0
         self.position: int = 0
@@ -29,6 +30,7 @@ class Algo:
         self.trade_complete: bool = False
         self.priceChange = PriceChange()
         self.contract = Contract()
+        self.order = Order()
 
     def price_change(self, last) -> PriceChange:
         v1 = self.trade_entry - self.last
@@ -43,9 +45,19 @@ class Algo:
         self.contract.exchange = "SMART"
         self.contract.primaryExchange = "NASDAQ"
 
-    def enter_trade(self, last):
-        if self.trade_complete == False and self.position == 0:
-            app.placeOrder()
+    def define_order(self):
+        self.contract.symbol = self.symbol
+        self.contract.secType = "STK"
+        self.contract.currency = "USD"
+        self.contract.exchange = "SMART"
+        self.contract.primaryExchange = "NASDAQ"
 
-    def run(self, last_price):
+    def enter_trade(self, last):
+        self.define_contract()
+        self.define_order()
+
+        if self.trade_complete == False and self.position == 0:
+            self.ib.placeOrder
+
+    def track(self, last_price):
         pass
