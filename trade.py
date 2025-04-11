@@ -22,10 +22,11 @@ class Trade:
         self.size: int = 0
         self.position: int = 0
         self.stoploss: float = 0.0
+        self.entry: bool = False
         self.entry_price: float = 0.0
         self.exit_price: float = 0.0
         self.active: bool = False
-        self.complete: bool = False
+        self.end: bool = False
         self.priceChange = PriceChange()
         self.contract = Contract()
         self.order = Order()

@@ -12,9 +12,9 @@ logger.add(sys.stderr, level="TRACE")
 
 
 class IB(EWrapper, EClient):
-    def __init__(self, trade: Trade):
+    def __init__(self, tr: Trade):
         EClient.__init__(self, self)
-        self.trade = trade
+        self.trade = tr
 
     def nextValidId(self, orderId: OrderId):
         logger.info(f"Initial OrderId from TWS: {orderId}")
@@ -23,8 +23,8 @@ class IB(EWrapper, EClient):
     def nextId(self) -> (ContractDetails, Order):
         self.orderId += 1
         self.contract = self.trade.define_contract()
-        order = self.trade.define_order()
-        self.reqContractDetails(self.orderId, ctx, order)
+        # order = self.trade.define_order()
+        # self.reqContractDetails(self.orderId, ctx, order)
 
     def error(self, reqId, errorCode, errorString, advanceOrderReject):
         logger.error(f" --- ReqId: {reqId} --- ")
@@ -48,9 +48,5 @@ class IB(EWrapper, EClient):
         logger.error(f"TickType: {TickTypeEnum.toStr(tickType)}, size: {size}")
 
     def enter_trade(self, last):
-        sel
-
-    def run(self, last_price):
-        if self.algo.trade_active == False and self.algo.trade_complete == False:
-            enter_trade()
+        if not self.trade.end:
             pass
