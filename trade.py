@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from ibapi.client import Contract, Order
+from ibapi.wrapper import ContractDetails
 
 
 class TradeSignal(Enum):
@@ -29,6 +30,7 @@ class Trade:
         self.end: bool = False
         self.priceChange = PriceChange()
         self.contract = Contract()
+        self.contractDetails = ContractDetails()
         self.order = Order()
 
     def price_change(self, last) -> PriceChange:
@@ -37,17 +39,17 @@ class Trade:
         self.priceChange.val = v1
         self.priceChange.pct = v2
 
-    def define_contract(self):
+    def define_contract(self) -> Contract:
         self.contract.symbol = self.symbol
         self.contract.secType = "STK"
         self.contract.currency = "USD"
         self.contract.exchange = "SMART"
         self.contract.primaryExchange = "NASDAQ"
 
-    def define_order(self, reqId: int, lmtprice: float):
+    def define_order(self, reqId: int, action: str, lmtprice: float) -> Order:
         self.order.symbol = self.symbol
         self.order.orderId = reqId
-        self.order.action = "BUY"
+        self.order.action = action
         self.order.orderType = "LMT"
         self.order.lmtPrice = lmtprice
         self.order.totalQuantity = 100

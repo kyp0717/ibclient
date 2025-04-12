@@ -17,8 +17,8 @@ def main():
     ib.connect("localhost", port, 1001)
     ##
     time.sleep(1)
-    ib.reqCurrentTime()
-    ib.reqMarketDataType(1)
+    # ib.reqMarketDataType(1)
+    ib.reqMarketDataType(3)
     ## Start streaming market data
     ib.reqMktData()
 
