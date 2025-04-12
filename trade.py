@@ -29,9 +29,13 @@ class Trade:
         self.active: bool = False
         self.end: bool = False
         self.priceChange = PriceChange()
-        self.contract = Contract()
+        self.contract = None
         self.contractDetails = ContractDetails()
         self.order = Order()
+        self.askprice: float = 0.0
+        self.lastprice: float = 0.0
+
+        self.define_contract()
 
     def price_change(self, last) -> PriceChange:
         v1 = self.trade_entry - self.last
@@ -40,12 +44,15 @@ class Trade:
         self.priceChange.pct = v2
 
     def define_contract(self) -> Contract:
+        self.contract = Contract()
         self.contract.symbol = self.symbol
         self.contract.secType = "STK"
         self.contract.currency = "USD"
         self.contract.exchange = "SMART"
         self.contract.primaryExchange = "NASDAQ"
 
+    # order is define in the tickPrice function
+    # price dependency
     def define_order(self, reqId: int, action: str, lmtprice: float) -> Order:
         self.order.symbol = self.symbol
         self.order.orderId = reqId
