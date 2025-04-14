@@ -13,8 +13,8 @@ def main():
     t = Trade("AAPL")
     ib = IB(t)
 
-    Thread(target=ib.run).start()
     ib.connect("localhost", port, 1001)
+    Thread(target=ib.run).start()
     ##
     time.sleep(1)
     ib.nextId()
