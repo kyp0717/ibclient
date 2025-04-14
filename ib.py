@@ -20,10 +20,15 @@ class IB(ibmsg.EWrapper, EClient):
     def nextValidId(self, orderId: OrderId):
         logger.info(f"Initial OrderId from TWS: {orderId}")
         self.orderId = orderId
+        self.trade.orderId_buy = orderId
+        c = self.trade.define_contract
+        self.trade.contract_buy = self.reqContractDetails(self.orderId, c)
 
     def nextId(self):
         self.orderId += 1
-        self.reqContractDetails(self.orderId, self.trade.contract)
+        self.trade.orderId_sell = self.orderId
+        c = self.trade.define_contract
+        self.trade.contract_sell = self.reqContractDetails(self.orderId, c)
 
     def error(self, reqId, errorCode, errorString, advanceOrderReject):
         logger.error(f" --- ReqId: {reqId} --- ")
@@ -32,7 +37,7 @@ class IB(ibmsg.EWrapper, EClient):
         logger.error(f"Order Reject: {advanceOrderReject} ")
 
     def contractDetails(self, reqId: int, contractDetails: ibmsg.ContractDetails):
-        self.trade.contractDetails = contractDetails
+        return contractDetails
 
     def tickPrice(self, reqId, tickType, price, attrib):
         logger.info(f" --- ReqId: {reqId} --- ")
@@ -45,16 +50,19 @@ class IB(ibmsg.EWrapper, EClient):
             if self.trade.begin:
                 enter = input(f" Last price is {price} - buy / sell")
                 if enter == "b":
-                    self.trade.define_order(self.orderId, action="BUY", lmtprice=price)
+                    self.trade.define_order(
+                        self, self.trade.orderId_buy, action="BUY", lmtprice=price
+                    )
                     self.placeOrder(
-                        self.orderId, self.trade.contractDetails, self.trade.order
+                        self.trade.orderId_buy,
+                        self.trade.contract_buy,
+                        self.trade.order,
                     )
         # bid price
         if tickType == 1:
             if self.trade.active:
                 print(f"Current Bid Price - {price}")
                 print(f"Entry Price - {self.trade.entry_price}")
-                print
                 pass
 
     def tickSize(self, reqId, tickType, size):
@@ -95,8 +103,13 @@ class IB(ibmsg.EWrapper, EClient):
         logger.info(
             f"orderId: {orderId} -clientId: {clientId}, whyHeld: {whyHeld}, mktCapPrice: {mktCapPrice}"
         )
+        if self.orderId == orderId:
+            if remaining == 0.0:
+                self.trade.active = True
+                self.trade.begin = False
+                self.trade.end = False
 
     def execDetails(
         self, reqId: int, contract: ibmsg.Contract, execution: ibmsg.Execution
     ):
-        print(f"reqId: {reqId}, contract: {contract}, execution: {execution}")
+        logger.info(f"reqId: {reqId}, contract: {contract}, execution: {execution}")

@@ -17,7 +17,10 @@ def main():
     ib.connect("localhost", port, 1001)
     ##
     time.sleep(1)
+    ib.nextId()
+
     # ib.reqMarketDataType(1)
+    ## 3 is delay marketdata
     ib.reqMarketDataType(3)
     ## Start streaming market data
     ib.reqMktData()

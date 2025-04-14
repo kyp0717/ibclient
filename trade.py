@@ -23,16 +23,17 @@ class Trade:
         self.size: int = 0
         self.position: int = 0
         self.stoploss: float = 0.0
-        self.entry: bool = False
-        self.entry_price: float = 0.0
-        self.exit_price: float = 0.0
+        self.begin: bool = True
         self.active: bool = False
         self.end: bool = False
+        self.entry_price: float = 0.0
+        self.exit_price: float = 0.0
         self.priceChange = PriceChange()
-        self.contract = None
-        self.contractDetails = ContractDetails()
+        self.contract_buy = ContractDetails()
+        self.contract_sell = ContractDetails()
         self.order = Order()
-        self.askprice: float = 0.0
+        self.orderId_buy = None
+        self.orderId_sell = None
         self.lastprice: float = 0.0
 
         self.define_contract()
@@ -42,6 +43,11 @@ class Trade:
         v2 = v1 / last * 100
         self.priceChange.val = v1
         self.priceChange.pct = v2
+
+    def price_change_pct(self, price) -> float:
+        v1 = self.trade_entry - self.last
+        v2 = v1 / price * 100
+        return v2
 
     def define_contract(self) -> Contract:
         self.contract = Contract()
