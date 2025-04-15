@@ -35,8 +35,8 @@ class Trade:
         self.entry_price: float = 0.0
         self.exit_price: float = 0.0
         self.priceChange = PriceChange()
-        self.orderId_buy = None
-        self.orderId_sell = None
+        self.fn_buy_order = None
+        self.fn_sell_order = None
         self.lastprice: float = 0.0
         self.contract = None
 
@@ -62,12 +62,16 @@ class Trade:
 
     # order is define in the tickPrice function
     # price dependency
-    def create_order(self, reqId: int, action: str, lmtprice: float):
+    def create_order_fn(self, reqId: int, action: str):
         order = Order()
-        order.symbol = self.symbol
-        order.orderId = reqId
-        order.action = action
-        order.orderType = "LMT"
-        order.lmtPrice = lmtprice
-        order.totalQuantity = 100
-        return order
+
+        def inner(lmtprice: float):
+            order.symbol = self.symbol
+            order.orderId = reqId
+            order.action = action
+            order.orderType = "LMT"
+            order.lmtPrice = lmtprice
+            order.totalQuantity = 100
+            return order
+
+        return inner

@@ -24,11 +24,22 @@ class IB(ibmsg.EWrapper, EClient):
     def nextId(self):
         self.orderId += 1
 
-    def enter_trade(self):
+    def enter_trade(self, action: str):
         self.nextId()
         self.trade.contract = self.trade.define_contract()
         logger.info(self.trade.contract)
+        self.trade.fn_buy_order = self.trade.create_order_fn(
+            self.orderId, action=action
+        )
         self.reqMktData(self.orderId, self.trade.contract, "232", False, False, [])
+
+    def exit_trade(self):
+        self.nextId()
+        self.trade.contract = self.trade.define_contract()
+        logger.info(self.trade.contract)
+        self.trade.fn_sell_order = self.trade.create_order_fn(
+            self.orderId, action="SELL"
+        )
 
     def error(self, reqId, errorCode, errorString, advanceOrderReject):
         logger.error(f" --- ReqId: {reqId} --- ")
@@ -41,18 +52,34 @@ class IB(ibmsg.EWrapper, EClient):
         logger.info(
             f"TickType: {TickTypeEnum.toStr(tickType)}, price: {price}, attrib: {attrib}"
         )
-        # ask price
-        if tickType == 66:
+        orderstate = self.reqOpenOrders()
+        logger.info(f"orderstate: {orderstate}")
+
+        # delay ask price
+        # if tickType == 2:
+        if orderstate is None and tickType == 66:
             # the trade has not begin, enter the position
-            if self.trade.begin:
+            # if self.trade.begin and self.trade.open_order:
+            if not self.trade.active:
                 enter = input(
                     f" {self.trade.symbol} : enter trade at {price} - buy? (y/n)"
                 )
                 if enter == "y":
-                    order = self.trade.create_order(
-                        self.orderId, action="BUY", lmtprice=price
-                    )
-                    # self.placeOrder(self.orderId, self.trade.contract, order)
+                    order_fn = self.trade.fn_buy_order("price")
+                    order = order_fn(lmtprice=price)
+                    self.placeOrder(self.orderId, self.trade.contract, order)
                 logger.info("order placed")
                 logger.info(order)
-                self.trade.begin = False
+                self.trade.active = True
+
+    def openOrder(
+        self,
+        orderId: ibmsg.OrderId,
+        contract: ibmsg.Contract,
+        order: ibmsg.Order,
+        orderState: ibmsg.OrderState,
+    ):
+        logger.info(
+            f"openOrder. orderId: {orderId}, contract: {contract}, order: {order}"
+        )
+        return orderState

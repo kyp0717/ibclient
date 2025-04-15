@@ -20,7 +20,7 @@ def main():
     # 3 is delay marketdata
     # ib.reqMarketDataType(1)
     ib.reqMarketDataType(3)
-    ib.enter_trade()
+    ib.enter_trade(action="BUY")
 
 
 if __name__ == "__main__":
