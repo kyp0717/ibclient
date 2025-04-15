@@ -17,13 +17,10 @@ def main():
     Thread(target=ib.run).start()
     ##
     time.sleep(1)
-    ib.nextId()
-
+    # 3 is delay marketdata
     # ib.reqMarketDataType(1)
-    ## 3 is delay marketdata
-    # ib.reqMarketDataType(3)
-    ## Start streaming market data
-    # ib.reqMktData()
+    ib.reqMarketDataType(3)
+    ib.enter_trade()
 
 
 if __name__ == "__main__":

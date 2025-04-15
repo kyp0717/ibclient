@@ -16,6 +16,13 @@ class PriceChange:
     cct: float = 0.0
 
 
+@dataclass
+class TrackId:
+    buy: int = None
+    sell: int = None
+    reqMktData: int = None
+
+
 class Trade:
     def __init__(self, symbol):
         self.symbol: str = symbol
@@ -55,7 +62,7 @@ class Trade:
 
     # order is define in the tickPrice function
     # price dependency
-    def define_order(self, reqId: int, action: str, lmtprice: float) -> Order:
+    def create_order(self, reqId: int, action: str, lmtprice: float):
         order = Order()
         order.symbol = self.symbol
         order.orderId = reqId

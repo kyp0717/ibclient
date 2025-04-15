@@ -20,17 +20,15 @@ class IB(ibmsg.EWrapper, EClient):
     def nextValidId(self, orderId: OrderId):
         logger.info(f"Initial OrderId from TWS: {orderId}")
         self.orderId = orderId
-        # c = self.trade.define_contract()
-        # print(c)
-
-        # self.trade.contract_buy = self.reqContractDetails(self.orderId, c)
-        # d = self.reqContractDetails(self.orderId, c)
-        # print(d)
 
     def nextId(self):
         self.orderId += 1
+
+    def enter_trade(self):
+        self.nextId()
         self.trade.contract = self.trade.define_contract()
         logger.info(self.trade.contract)
+        self.reqMktData(self.orderId, self.trade.contract, "232", False, False, [])
 
     def error(self, reqId, errorCode, errorString, advanceOrderReject):
         logger.error(f" --- ReqId: {reqId} --- ")
@@ -39,11 +37,22 @@ class IB(ibmsg.EWrapper, EClient):
         logger.error(f"Order Reject: {advanceOrderReject} ")
 
     def tickPrice(self, reqId, tickType, price, attrib):
-        logger.info(f" --- ReqId: {reqId} --- ")
+        logger.info(f" --- ReqId {reqId} : [self.trade.symbol] --- ")
         logger.info(
             f"TickType: {TickTypeEnum.toStr(tickType)}, price: {price}, attrib: {attrib}"
         )
-        self.trade.order = self.trade.define_order(
-            reqId=self.orderId, action="BUY", lmtprice=price
-        )
-        logger.info(self.trade.order)
+        # ask price
+        if tickType == 66:
+            # the trade has not begin, enter the position
+            if self.trade.begin:
+                enter = input(
+                    f" {self.trade.symbol} : enter trade at {price} - buy? (y/n)"
+                )
+                if enter == "y":
+                    order = self.trade.create_order(
+                        self.orderId, action="BUY", lmtprice=price
+                    )
+                    # self.placeOrder(self.orderId, self.trade.contract, order)
+                logger.info("order placed")
+                logger.info(order)
+                self.trade.begin = False
