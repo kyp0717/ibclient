@@ -22,6 +22,16 @@ def main():
     ib.reqMarketDataType(3)
     ib.enter_trade(action="BUY")
 
+    try:
+        print("Running... Press Ctrl+C to exit")
+        while True:
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("\nDisconnecting from TWS...")
+        ib.disconnect()
+        print("Disconnected. Exiting.")
+
 
 if __name__ == "__main__":
     main()

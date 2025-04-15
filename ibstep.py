@@ -33,14 +33,6 @@ class IB(ibmsg.EWrapper, EClient):
         )
         self.reqMktData(self.orderId, self.trade.contract, "232", False, False, [])
 
-    def exit_trade(self):
-        self.nextId()
-        self.trade.contract = self.trade.define_contract()
-        logger.info(self.trade.contract)
-        self.trade.fn_sell_order = self.trade.create_order_fn(
-            self.orderId, action="SELL"
-        )
-
     def error(self, reqId, errorCode, errorString, advanceOrderReject):
         logger.error(f" --- ReqId: {reqId} --- ")
         logger.error(f"ErrorCode: {errorCode}, ErrorString: {errorString}")
@@ -65,8 +57,8 @@ class IB(ibmsg.EWrapper, EClient):
                     f" {self.trade.symbol} : enter trade at {price} - buy? (y/n)"
                 )
                 if enter == "y":
-                    order_fn = self.trade.fn_buy_order("price")
-                    order = order_fn(lmtprice=price)
+                    order = self.trade.fn_buy_order(price)
+                    # order = order_fn(lmtprice=price)
                     self.placeOrder(self.orderId, self.trade.contract, order)
                 logger.info("order placed")
                 logger.info(order)

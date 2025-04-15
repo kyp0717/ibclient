@@ -65,7 +65,7 @@ class Trade:
     def create_order_fn(self, reqId: int, action: str):
         order = Order()
 
-        def inner(lmtprice: float):
+        def create_order(lmtprice: float):
             order.symbol = self.symbol
             order.orderId = reqId
             order.action = action
@@ -74,4 +74,4 @@ class Trade:
             order.totalQuantity = 100
             return order
 
-        return inner
+        return create_order
