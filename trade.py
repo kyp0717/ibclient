@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from enum import Enum
 
 from ibapi.client import Contract, Order
-from ibapi.wrapper import ContractDetails
 
 
 class TradeSignal(Enum):
@@ -29,14 +28,10 @@ class Trade:
         self.entry_price: float = 0.0
         self.exit_price: float = 0.0
         self.priceChange = PriceChange()
-        self.contract_buy = ContractDetails()
-        self.contract_sell = ContractDetails()
-        self.order = Order()
         self.orderId_buy = None
         self.orderId_sell = None
         self.lastprice: float = 0.0
-
-        self.define_contract()
+        self.contract = None
 
     def price_change(self, last) -> PriceChange:
         v1 = self.trade_entry - self.last
@@ -50,19 +45,22 @@ class Trade:
         return v2
 
     def define_contract(self) -> Contract:
-        self.contract = Contract()
-        self.contract.symbol = self.symbol
-        self.contract.secType = "STK"
-        self.contract.currency = "USD"
-        self.contract.exchange = "SMART"
-        self.contract.primaryExchange = "NASDAQ"
+        contract = Contract()
+        contract.symbol = self.symbol
+        contract.secType = "STK"
+        contract.currency = "USD"
+        contract.exchange = "SMART"
+        contract.primaryExchange = "NASDAQ"
+        return contract
 
     # order is define in the tickPrice function
     # price dependency
     def define_order(self, reqId: int, action: str, lmtprice: float) -> Order:
-        self.order.symbol = self.symbol
-        self.order.orderId = reqId
-        self.order.action = action
-        self.order.orderType = "LMT"
-        self.order.lmtPrice = lmtprice
-        self.order.totalQuantity = 100
+        order = Order()
+        order.symbol = self.symbol
+        order.orderId = reqId
+        order.action = action
+        order.orderType = "LMT"
+        order.lmtPrice = lmtprice
+        order.totalQuantity = 100
+        return order

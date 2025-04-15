@@ -1,7 +1,7 @@
 import time
 from threading import Thread
 
-from ib import IB
+from ibstep import IB
 from trade import Trade
 
 port = 7500
@@ -21,9 +21,9 @@ def main():
 
     # ib.reqMarketDataType(1)
     ## 3 is delay marketdata
-    ib.reqMarketDataType(3)
+    # ib.reqMarketDataType(3)
     ## Start streaming market data
-    ib.reqMktData()
+    # ib.reqMktData()
 
 
 if __name__ == "__main__":
