@@ -4,6 +4,7 @@ import queue
 
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
+from loguru import logger
 
 # use to pass msg btw algo module to IB App
 algo_request = queue.Queue()
@@ -18,7 +19,7 @@ class IBClient(EWrapper, EClient):
         self.order_id = None
 
     def nextValidId(self, orderId):
-        print(f"[IB] Next valid order ID: {orderId}")
+        logger.info(f"[IB] Next valid order ID: {orderId}")
         self.order_id = orderId
 
     def orderStatus(
