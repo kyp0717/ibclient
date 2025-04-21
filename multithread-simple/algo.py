@@ -4,7 +4,7 @@ import queue
 import sys
 import threading
 
-from ib_client import algo_request, tws_response
+from ib_client import IBClient, tws_response
 from loguru import logger
 
 from trade import Trade
@@ -14,18 +14,18 @@ logger.remove()  # Remove the default
 logger.add(sys.stderr, level="TRACE")
 
 
-def req_price(t: Trade):
+def req_price(t: Trade, client: IBClient):
     # Send request
-
+    client.nextId()
     c = t.define_contract()
-    algo_request.put({"type": "req_ask", "contract": c})
+    client.reqMktData(client.orderId, c, "232", False, False, [])
 
     # Wait for status
     while True:
         try:
             msg = tws_response.get(timeout=5)
-            if msg["type"] == "orderStatus":
-                logger.info(f"[Algo] Order {msg['orderId']} status: {msg['status']}")
+            if msg["type"] == "tickPrice":
+                logger.info(f"[Algo] {msg['orderId']} status: {msg['status']}")
                 if msg["status"] in ("Filled"):
                     logger.info(f"[Algo] Order {msg['orderId']} -- Filled")
                     logger.info(
@@ -66,7 +66,7 @@ def enter_trade(t: Trade):
             continue
 
 
-def algo(t: Trade):
+def algo(t: Trade, client: IBClient):
     logger.info("Starting algorithm...")
 
     logger.info("Entering trade...")
@@ -76,5 +76,5 @@ def algo(t: Trade):
 
 
 def run_algo():
-    thread = threading.Thread(target=trading_algo)
+    thread = threading.Thread(target=algo)
     thread.start()

@@ -9,11 +9,17 @@ from ib_worker import start_ib_worker
 from loguru import logger
 
 from algo import run_algo
+from trade import Trade
 
 # import logging
 logger.remove()  # Remove the default
 # logger.add(sys.stderr, level="TRACE", format="{time} | {level} | {message}")
 logger.add(sys.stderr, level="TRACE")
+
+# define the asset to trade
+t = Trade("AAPL")
+
+
 # Instantiate app
 # this must be done first to create queue to be imported
 logger.info("IB client instantiated")

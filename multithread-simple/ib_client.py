@@ -22,6 +22,15 @@ class IBClient(EWrapper, EClient):
         logger.info(f"[IB] Next valid order ID: {orderId}")
         self.order_id = orderId
 
+    def nextId(self):
+        self.orderId += 1
+
+    def error(self, reqId, errorCode, errorString, advanceOrderReject):
+        logger.error(f" --- ReqId: {reqId} --- ")
+        logger.error(f"ErrorCode: {errorCode}, ErrorString: {errorString}")
+        logger.error(f"ErrorString: {errorString}")
+        logger.error(f"Order Reject: {advanceOrderReject} ")
+
     def orderStatus(
         self,
         orderId,
@@ -53,6 +62,16 @@ class IBClient(EWrapper, EClient):
             "execId": execution.execId,
             "shares": execution.shares,
             "price": execution.price,
+        }
+        tws_response.put(msg)
+
+    def tickPrice(self, reqId, tickType, price, attrib):
+        msg = {
+            "type": "tickPrice",
+            "reqId": reqId,
+            "tickType": tickType,
+            "price": price,
+            "attrib": attrib,
         }
         tws_response.put(msg)
 

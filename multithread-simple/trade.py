@@ -35,8 +35,8 @@ class Trade:
         self.entry_price: float = 0.0
         self.exit_price: float = 0.0
         self.priceChange = PriceChange()
-        self.fn_buy_order = None
-        self.fn_sell_order = None
+        self.enter_orderid = None
+        self.exit_orderid = None
         self.lastprice: float = 0.0
         self.contract = None
 
