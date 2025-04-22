@@ -1,6 +1,7 @@
 # algo.py
 
 import threading
+import queue
 
 from ib_worker import from_ib_queue, to_ib_queue
 from ibapi.contract import Contract

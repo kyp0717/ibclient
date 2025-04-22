@@ -71,7 +71,7 @@ class Trade:
             order.action = action
             order.orderType = "LMT"
             order.lmtPrice = lmtprice
-            order.totalQuantity = 100
+            order.totalQuantity = 10
             return order
 
         return create_order

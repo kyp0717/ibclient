@@ -18,63 +18,24 @@ def req_price(t: Trade, client: IBClient):
     # Send request
     client.nextId()
     c = t.define_contract()
-    client.reqMktData(client.orderId, c, "232", False, False, [])
+    client.reqMktData(client.order_id, c, "232", False, False, [])
 
     # Wait for status
     while True:
         try:
             msg = tws_response.get(timeout=5)
             if msg["type"] == "tickPrice":
-                logger.info(f"[Algo] {msg['orderId']} status: {msg['status']}")
-                if msg["status"] in ("Filled"):
-                    logger.info(f"[Algo] Order {msg['orderId']} -- Filled")
-                    logger.info(
-                        f"[Algo] Order {msg['orderId']} status: {msg['status']}"
-                    )
-                    break
-                if msg["status"] in ("Cancelled"):
-                    # TODO - exit the trade
-                    break
+                logger.info(f"[Algo] {msg['d']} status: {msg['status']}")
+                # TODO - exit the trade
+                break
         except queue.Empty:
-            logger.info("[Algo] Waiting for order status...")
+            logger.info(f"[Algo] Waiting for market data for {t.symbol}...")
             continue
 
 
-def enter_trade(t: Trade):
-    c = t.define_contract()
-    o = t.create_order_fn()
-    # Send order
-    algo_request.put({"type": "place_order", "contract": c, "order": o})
+def start(trade, client):
+    def algo():
+        req_price(trade, client)
 
-    # Wait for status
-    while True:
-        try:
-            msg = tws_response.get(timeout=5)
-            if msg["type"] == "orderStatus":
-                logger.info(f"[Algo] Order {msg['orderId']} status: {msg['status']}")
-                if msg["status"] in ("Filled"):
-                    logger.info(f"[Algo] Order {msg['orderId']} -- Filled")
-                    logger.info(
-                        f"[Algo] Order {msg['orderId']} status: {msg['status']}"
-                    )
-                    break
-                if msg["status"] in ("Cancelled"):
-                    # TODO - exit the trade
-                    break
-        except queue.Empty:
-            logger.info("[Algo] Waiting for order status...")
-            continue
-
-
-def algo(t: Trade, client: IBClient):
-    logger.info("Starting algorithm...")
-
-    logger.info("Entering trade...")
-    enter_trade(t)
-
-    logger.info("[Algo] Algorithm finished.")
-
-
-def run_algo():
-    thread = threading.Thread(target=algo)
+    thread = threading.Thread(target=algo, daemon=True)
     thread.start()

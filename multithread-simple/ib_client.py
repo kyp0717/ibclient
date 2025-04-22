@@ -23,7 +23,7 @@ class IBClient(EWrapper, EClient):
         self.order_id = orderId
 
     def nextId(self):
-        self.orderId += 1
+        self.order_id += 1
 
     def error(self, reqId, errorCode, errorString, advanceOrderReject):
         logger.error(f" --- ReqId: {reqId} --- ")

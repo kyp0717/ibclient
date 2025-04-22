@@ -5,10 +5,11 @@ import threading
 import time
 
 from ib_client import IBClient, start_ib_client
-from ib_worker import start_ib_worker
+
+# from ib_worker import start_ib_worker
 from loguru import logger
 
-from algo import run_algo
+import algo
 from trade import Trade
 
 # import logging
@@ -26,6 +27,8 @@ logger.info("IB client instantiated")
 client = IBClient()
 client.connect("127.0.0.1", 7500, clientId=1001)
 
+## delay market data
+client.reqMarketDataType(3)
 # Start IB API client in background
 
 logger.info("Starting ib client thread")
@@ -36,13 +39,26 @@ while client.order_id is None:
     time.sleep(0.1)
 
 # Start IB worker loop in a thread
-logger.info("Starting ib worker thread")
-start_ib_worker(client)
+# logger.info("Starting ib worker thread")
+# start_ib_worker(client)
 
 # Start the trading algorithm in a thread
 logger.info("Starting algo thread")
-run_algo()
+algo.start(t, client)
 
 # Optionally keep main thread alive
 while True:
-    time.sleep(1)
+    try:
+        print("Running... Press Ctrl+C to exit")
+        time.sleep(1)
+        continue
+
+    except KeyboardInterrupt:
+        print("\nDisconnecting from TWS...")
+        client.disconnect()
+        print("IB Client has disconnected. Exiting.")
+        break
+
+s = input("Shutdown Algo? (y/n)")
+if s == "y":
+    sys.exit(0)
