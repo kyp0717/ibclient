@@ -1,5 +1,6 @@
 # ib_client.py
 
+import datetime
 import queue
 
 from ibapi.client import EClient
@@ -11,6 +12,11 @@ algo_request = queue.Queue()
 
 # messages coming from TWS (which is coming from remote server)
 tws_response = queue.Queue()
+qu_ask = queue.Queue()
+qu_ctx = queue.Queue()
+qu_bid = queue.Queue()
+qu_orderstatus = queue.Queue()
+qu_pnl = queue.Queue()
 
 
 class IBClient(EWrapper, EClient):
@@ -32,6 +38,12 @@ class IBClient(EWrapper, EClient):
         logger.error(f"ErrorString: {errorString}")
         logger.error(f"Order Reject: {advanceOrderReject} ")
 
+    def contractDetails(self, reqId, contractDetails):
+        msg = {
+            "conId": contractDetails.contract.conid,
+        }
+        qu_ctx.put(msg)
+
     def orderStatus(
         self,
         orderId,
@@ -47,14 +59,14 @@ class IBClient(EWrapper, EClient):
         mktCapPrice,
     ):
         msg = {
-            "type": "orderStatus",
             "orderId": orderId,
             "status": status,
             "filled": filled,
             "remaining": remaining,
             "avgFillPrice": avgFillPrice,
         }
-        tws_response.put(msg)
+        qu_orderstatus.put(msg)
+        logger.info(msg)
 
     def execDetails(self, reqId, contract, execution):
         msg = {
@@ -67,20 +79,19 @@ class IBClient(EWrapper, EClient):
         tws_response.put(msg)
 
     def tickPrice(self, reqId, tickType, price, attrib):
+        timestamp = datetime.datetime.now()
         msg = {
-            "type": "tickPrice",
             "reqId": reqId,
             "tickType": tickType,
             "price": price,
             "attrib": attrib,
+            "time": timestamp,
         }
-        tws_response.put(msg)
-
-    # def reqMktDataX(self, ticker_id, contract):
-    #     if ticker_id not in self.active_streams:
-    #         # self.reqMktData(ticker_id, contract, "", False, False, [])
-    #         self.reqMktData(self.order_id, contract, "232", False, False, [])
-    #         self.active_streams.add(ticker_id)
+        if tickType == 2:
+            qu_ask.put(msg)
+        if tickType == 1:
+            qu_bid.put(msg)
+        # logger.info(msg)
 
     def cancelMarketData(self, ticker_id):
         if ticker_id in self.active_streams:
@@ -89,6 +100,16 @@ class IBClient(EWrapper, EClient):
             logger.info(f"Stopped market data stream for {ticker_id}")
         else:
             logger.info(f"No active stream to cancel for {ticker_id}")
+
+    def clear_queue(q):
+        while not q.empty():
+            try:
+                q.get_nowait()
+            except queue.Empty:
+                break
+
+    def pnl(self, reqId, dailyPnL, unrealizedPnL, realizedPnL):
+        pass
 
 
 def start_ib_client(app):

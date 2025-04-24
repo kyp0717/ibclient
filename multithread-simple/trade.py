@@ -38,7 +38,7 @@ class Trade:
         self.enter_orderid = None
         self.exit_orderid = None
         self.lastprice: float = 0.0
-        self.contract = None
+        self.conid = None
 
     def price_change(self, last) -> PriceChange:
         v1 = self.trade_entry - self.last
