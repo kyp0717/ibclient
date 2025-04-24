@@ -17,6 +17,7 @@ class IBClient(EWrapper, EClient):
     def __init__(self):
         EClient.__init__(self, self)
         self.order_id = None
+        self.active_streams = set()
 
     def nextValidId(self, orderId):
         logger.info(f"[IB] Next valid order ID: {orderId}")
@@ -74,6 +75,20 @@ class IBClient(EWrapper, EClient):
             "attrib": attrib,
         }
         tws_response.put(msg)
+
+    # def reqMktDataX(self, ticker_id, contract):
+    #     if ticker_id not in self.active_streams:
+    #         # self.reqMktData(ticker_id, contract, "", False, False, [])
+    #         self.reqMktData(self.order_id, contract, "232", False, False, [])
+    #         self.active_streams.add(ticker_id)
+
+    def cancelMarketData(self, ticker_id):
+        if ticker_id in self.active_streams:
+            self.cancelMktData(ticker_id)
+            self.active_streams.remove(ticker_id)
+            logger.info(f"Stopped market data stream for {ticker_id}")
+        else:
+            logger.info(f"No active stream to cancel for {ticker_id}")
 
 
 def start_ib_client(app):

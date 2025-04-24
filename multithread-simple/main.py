@@ -20,7 +20,6 @@ logger.add(sys.stderr, level="TRACE")
 # define the asset to trade
 t = Trade("AAPL")
 
-
 # Instantiate app
 # this must be done first to create queue to be imported
 logger.info("IB client instantiated")
@@ -32,7 +31,8 @@ client.reqMarketDataType(3)
 # Start IB API client in background
 
 logger.info("Starting ib client thread")
-threading.Thread(target=start_ib_client, args=(client,), daemon=True).start()
+ibclient_thread = threading.Thread(target=start_ib_client, args=(client,), daemon=True)
+ibclient_thread.start()
 
 # Wait for next valid order ID
 while client.order_id is None:
@@ -44,14 +44,14 @@ while client.order_id is None:
 
 # Start the trading algorithm in a thread
 logger.info("Starting algo thread")
-algo.start(t, client)
+algo.run(t, client)
 
 # Optionally keep main thread alive
 while True:
     try:
-        print("Running... Press Ctrl+C to exit")
+        print("Running... Press Ctrl+C to disconnect IB Client")
         time.sleep(1)
-        continue
+        # continue
 
     except KeyboardInterrupt:
         print("\nDisconnecting from TWS...")
@@ -61,4 +61,5 @@ while True:
 
 s = input("Shutdown Algo? (y/n)")
 if s == "y":
+    ibclient_thread.join()
     sys.exit(0)
