@@ -2,6 +2,7 @@
 import datetime
 import queue
 import sys
+import time
 
 from ib_client import IBClient, qu_ask, qu_bid, qu_ctx, qu_orderstatus, qu_pnl
 from loguru import logger
@@ -23,19 +24,20 @@ def enter_trade(t: Trade, client: IBClient):
     client.nextId()
     ctx = t.define_contract()
     # Wait for status
-    while True:
-        client.reqContractDetails(client.order_id, contract=ctx)
-        try:
-            msg = qu_ctx.get(timeout=5)
-            logger.info(f"[Algo] ReqId {msg['reqId']} - Getting Contract Detail")
-            t.conid = msg["conId"]
-            logger.info(
-                f"[Algo] ReqId {msg['reqId']} - ConId for {t.symbol} - {msg['conId']}"
-            )
-            break
-        except queue.Empty:
-            logger.info(f"[Algo] Getting Contract ID for {t.symbol}...")
-            continue
+    client.reqContractDetails(client.order_id, contract=ctx)
+    time.sleep(1)
+    try:
+        msg = qu_ctx.get(timeout=5)
+        logger.info(f"[Algo] ReqId {msg['reqId']} - Getting Contract Detail")
+        t.conid = msg["conId"]
+        logger.info(
+            f"[Algo] ReqId {msg['reqId']}: ConId for {t.symbol} - {msg['conId']}"
+        )
+    except queue.Empty:
+        logger.info(f"[Algo] Unable to get Contract ID for {t.symbol}...")
+        logger.info(f"[Algo] Algo is shutting down for {t.symbol}...")
+        client.disconnect()
+        sys.exit(1)
 
     client.nextId()
     ordfn = t.create_order_fn(reqId=client.order_id, action="BUY")
@@ -43,7 +45,6 @@ def enter_trade(t: Trade, client: IBClient):
 
     # Wait for status
     while True:
-        # client.clear_queue(qu_ask)
         try:
             msg = qu_ask.get(timeout=5)
             time_diff = datetime.datetime.now() - msg["time"]
@@ -69,7 +70,8 @@ def check_order(t: Trade, client: IBClient):
             logger.info(f"[Algo] OrderId {msg['orderId']} - Order Status ")
             logger.info(f"[Algo] Order Status - {msg['status']} ")
             if msg["status"] == "Filled":
-                # logger.info(f"[Algo] Order Status - {msg['status']} ")
+                logger.info(f"[Algo] AverageFillPrice - {msg['avgFillPrice']} ")
+                t.avgFillPrice = msg["avgFillPrice"]
                 break
             else:
                 continue
@@ -80,15 +82,16 @@ def check_order(t: Trade, client: IBClient):
 
 def get_pnl(t: Trade, client: IBClient):
     client.reqPnL()
+    # wait for TWS to run callback
+    time.sleep(1)
     try:
         msg = qu_pnl.get(timeout=5)
-        logger.info(f"[Algo] OrderId {msg['orderId']} - Order Status ")
-            break
-        else:
-            continue
+        gain = msg["unrealizedPnL"]
+        logger.info(f"[Algo]  UnrealizedPnL - {msg['unrealizedPnL']} ")
+        pnl = (gain - t.avgFillPrice) / gain * 100
+
     except queue.Empty:
         logger.info(f"[Algo] Waiting PNL for {t.symbol}...")
-        continue
 
 
 def exit_trade(t: Trade, client: IBClient):

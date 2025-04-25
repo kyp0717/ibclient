@@ -4,7 +4,7 @@ import datetime
 import queue
 
 from ibapi.client import EClient
-from ibapi.wrapper import EWrapper
+from ibapi.wrapper import ContractDetails, EWrapper
 from loguru import logger
 
 # use to pass msg btw algo module to IB App
@@ -17,6 +17,7 @@ qu_ctx = queue.Queue()
 qu_bid = queue.Queue()
 qu_orderstatus = queue.Queue()
 qu_pnl = queue.Queue()
+qu_pnlsingle = queue.Queue()
 
 
 class IBClient(EWrapper, EClient):
@@ -38,10 +39,8 @@ class IBClient(EWrapper, EClient):
         logger.error(f"ErrorString: {errorString}")
         logger.error(f"Order Reject: {advanceOrderReject} ")
 
-    def contractDetails(self, reqId, contractDetails):
-        msg = {
-            "conId": contractDetails.contract.conid,
-        }
+    def contractDetails(self, reqId, contractDetails: ContractDetails):
+        msg = {"reqId": reqId, "conId": contractDetails.contract.conId}
         qu_ctx.put(msg)
 
     def orderStatus(
@@ -109,7 +108,25 @@ class IBClient(EWrapper, EClient):
                 break
 
     def pnl(self, reqId, dailyPnL, unrealizedPnL, realizedPnL):
-        pass
+        timestamp = datetime.datetime.now()
+        msg = {
+            "reqId": reqId,
+            "unrealizedPnL": unrealizedPnL,
+            "time": timestamp,
+        }
+        qu_pnl.put(msg)
+
+    def pnlSingle(
+        self,
+        reqId: int,
+        pos: float,
+        dailyPnL: float,
+        unrealizedPnL: float,
+        realizedPnL: float,
+        value: float,
+    ):
+        msg = {"reqId": reqId, "unrealizedPnL": unrealizedPnL, "value": value}
+        qu_pnlsingle.put(msg)
 
 
 def start_ib_client(app):

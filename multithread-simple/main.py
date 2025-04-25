@@ -39,11 +39,8 @@ ibclient_thread.start()
 while client.order_id is None:
     time.sleep(0.1)
 
-# Start IB worker loop in a thread
-# logger.info("Starting ib worker thread")
-# start_ib_worker(client)
 
-# Start the trading algorithm in a thread
+# Start the trading algorithm in main thread
 logger.info("Starting algo ...")
 algo.enter_trade(t, client)
 algo.check_order(t, client)
