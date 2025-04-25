@@ -24,16 +24,20 @@ def enter_trade(t: Trade, client: IBClient):
     ctx = t.define_contract()
     # Wait for status
     while True:
-        client.reqContractDetails()
+        client.reqContractDetails(client.order_id, contract=ctx)
         try:
             msg = qu_ctx.get(timeout=5)
             logger.info(f"[Algo] ReqId {msg['reqId']} - Getting Contract Detail")
             t.conid = msg["conId"]
+            logger.info(
+                f"[Algo] ReqId {msg['reqId']} - ConId for {t.symbol} - {msg['conId']}"
+            )
             break
         except queue.Empty:
-            logger.info(f"[Algo] Waiting for market data for {t.symbol}...")
+            logger.info(f"[Algo] Getting Contract ID for {t.symbol}...")
             continue
 
+    client.nextId()
     ordfn = t.create_order_fn(reqId=client.order_id, action="BUY")
     client.reqMktData(client.order_id, ctx, "", False, False, [])
 
@@ -74,21 +78,17 @@ def check_order(t: Trade, client: IBClient):
             continue
 
 
-def pnl(t: Trade, client: IBClient):
-    while True:
-        client.reqPnL()
-        try:
-            msg = qu_pnl.get(timeout=5)
-            logger.info(f"[Algo] OrderId {msg['orderId']} - Order Status ")
-            logger.info(f"[Algo] Order Status - {msg['status']} ")
-            if msg["status"] == "Filled":
-                # logger.info(f"[Algo] Order Status - {msg['status']} ")
-                break
-            else:
-                continue
-        except queue.Empty:
-            logger.info(f"[Algo] Waiting PNL for {t.symbol}...")
+def get_pnl(t: Trade, client: IBClient):
+    client.reqPnL()
+    try:
+        msg = qu_pnl.get(timeout=5)
+        logger.info(f"[Algo] OrderId {msg['orderId']} - Order Status ")
+            break
+        else:
             continue
+    except queue.Empty:
+        logger.info(f"[Algo] Waiting PNL for {t.symbol}...")
+        continue
 
 
 def exit_trade(t: Trade, client: IBClient):
