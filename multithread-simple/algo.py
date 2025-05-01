@@ -4,7 +4,7 @@ import queue
 import sys
 import time
 
-from ib_client import IBClient, qu_ask, qu_bid, qu_ctx, qu_orderstatus, qu_pnl
+from ib_client import IBClient, qu_ask, qu_bid, qu_ctx, qu_orderstatus, qu_pnlsingle
 from loguru import logger
 
 from trade import Trade
@@ -67,10 +67,10 @@ def check_order(t: Trade, client: IBClient):
     while True:
         try:
             msg = qu_orderstatus.get(timeout=5)
-            logger.info(f"[Algo] OrderId {msg['orderId']} - Order Status ")
-            logger.info(f"[Algo] Order Status - {msg['status']} ")
+            logger.info(f"OrderId {msg['orderId']} - Order Status ")
+            logger.info(f"Order Status - {msg['status']} ")
             if msg["status"] == "Filled":
-                logger.info(f"[Algo] AverageFillPrice - {msg['avgFillPrice']} ")
+                logger.info(f"AverageFillPrice - {msg['avgFillPrice']} ")
                 t.avgFillPrice = msg["avgFillPrice"]
                 break
             else:
@@ -80,18 +80,32 @@ def check_order(t: Trade, client: IBClient):
             continue
 
 
-def get_pnl(t: Trade, client: IBClient):
-    client.reqPnL()
-    # wait for TWS to run callback
-    time.sleep(1)
-    try:
-        msg = qu_pnl.get(timeout=5)
-        gain = msg["unrealizedPnL"]
-        logger.info(f"[Algo]  UnrealizedPnL - {msg['unrealizedPnL']} ")
-        pnl = (gain - t.avgFillPrice) / gain * 100
+def getPnlSingle(t: Trade, client: IBClient, account: str) -> float:
+    client.nextId()
 
-    except queue.Empty:
-        logger.info(f"[Algo] Waiting PNL for {t.symbol}...")
+    pnl_pct = 0.0
+    # Wait for status
+    while True:
+        client.reqPnLSingle(
+            reqId=client.order_id, account=account, modelCode="", conid=t.conid
+        )
+        # wait for TWS to run callback
+        time.sleep(1)
+        try:
+            msg = qu_pnlsingle.get(timeout=5)
+            # pnl = msg["unrealizedPnL"]
+            value = msg["value"]
+            logger.info(f"[Algo] UnrealizedPnL: ${msg['unrealizedPnL']} ")
+            logger.info(f"[Algo] Position Value: ${msg['value']} ")
+            pnl_pct = (value - (t.avgFillPrice * t.position)) / value * 100
+            logger.info(f"Unrealize PNL pct: {pnl_pct}")
+            break
+
+        except queue.Empty:
+            logger.info(f"[Algo] Waiting PNL for {t.symbol}...")
+            continue
+
+    return pnl_pct
 
 
 def exit_trade(t: Trade, client: IBClient):
@@ -103,16 +117,25 @@ def exit_trade(t: Trade, client: IBClient):
     # Wait for status
     while True:
         try:
+            # pnl_pct = getPnlSingle(t, client, account)
+            # logger.info(f"[Algo] Latest PnL is {pnl_pct}")
+            # get ask price from queue
+            # ensure the the price in queue is recent
+
             msg = qu_bid.get(timeout=5)
             time_diff = datetime.datetime.now() - msg["time"]
             if time_diff.total_seconds() > 4:
                 continue
             # TODO - check correct tick type (looking for bid price)
-            logger.info(f"[Algo] ReqId {msg['reqId']} - Bid {msg['price']} ")
-            buy = input(f"Sell {t.symbol} at {msg['price']} (y/n)")
-            if buy == "y":
+            logger.info(f"ReqId {msg['reqId']} bid: {msg['price']} ")
+            pnl_val = t.position * (t.avgFillPrice - msg["price"])
+            logger.info(f"ReqId {msg['reqId']} pnl:  {pnl_val}")
+            sell = input(f"Sell {t.symbol} at {msg['price']} (y/n)")
+            if sell == "y":
+                logger.info(f"ReqId {msg['reqId']} ... attempting to sell {t.symbol}")
                 ord = ordfn(msg["price"])
                 client.placeOrder(client.order_id, ctx, ord)
+                check_order(t, client)
                 break
             else:
                 continue

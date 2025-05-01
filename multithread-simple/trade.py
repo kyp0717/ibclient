@@ -24,14 +24,12 @@ class TrackId:
 
 
 class Trade:
-    def __init__(self, symbol):
+    def __init__(self, symbol, position: int):
         self.symbol: str = symbol
         self.size: int = 0
-        self.position: int = 0
+        self.position = position
         self.stoploss: float = 0.0
         self.avgFillPrice: float = 0.0
-        self.exit_price: float = 0.0
-        self.priceChange = PriceChange()
         self.conid = None
 
     def price_change(self, last) -> PriceChange:
@@ -65,7 +63,8 @@ class Trade:
             order.action = action
             order.orderType = "LMT"
             order.lmtPrice = lmtprice
-            order.totalQuantity = 10
+            order.totalQuantity = self.position
+            order.outsideRth = True
             return order
 
         return create_order

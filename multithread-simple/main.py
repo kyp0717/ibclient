@@ -18,8 +18,8 @@ logger.remove()  # Remove the default
 logger.add(sys.stderr, level="TRACE")
 
 # define the asset to trade
-t = Trade("AAPL")
-
+t = Trade(symbol="AAPL", position=10)
+paper_account = "DU1591287"
 # Instantiate app
 # this must be done first to create queue to be imported
 logger.info("IB client instantiated")
@@ -44,6 +44,7 @@ while client.order_id is None:
 logger.info("Starting algo ...")
 algo.enter_trade(t, client)
 algo.check_order(t, client)
+algo.exit_trade(t, client)
 
 
 s = input("Shutdown Algo? (y/n)")
